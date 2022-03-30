@@ -1,0 +1,38 @@
+version: '3'
+services:
+    db: 
+        platform: linux/x86_64
+        image: mysql:5.7
+        restart: always
+        environment:
+            MYSQL_ROOT_PASSWORD: password
+            MYSQL_DATABASE: app
+            MYSQL_USER: user
+            MYSQL_PASSWORD: password
+        ports:
+            - "3307:3306"
+    backend: 
+        build: ./backend
+        command: sh -c "rails db:migrate && bundle exec rails s -p 8081 -b '0.0.0.0' -P /tmp/rails.pid" 
+        volumes: 
+            - "./backend:/app"
+        ports: 
+            - "8081:8081"
+        depends_on:
+            - db
+        links:
+            - db
+        environment:
+            DB_USER: root
+            DB_NAME: app
+            DB_PASSWORD: password
+            DB_HOST: db
+    frontend:
+        build: ./frontend
+        command: sh -c "npm rebuild esbuild && yarn dev"
+        volumes: 
+            - "./frontend:/app"
+        ports: 
+            - "3000:3000"
+        depends_on:
+          - backend
